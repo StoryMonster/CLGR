@@ -1,0 +1,3 @@
+[submodule "externals/mingw-std-threads"]
+	path = externals/mingw-std-threads
+	url = git@github.com:meganz/mingw-std-threads.git
