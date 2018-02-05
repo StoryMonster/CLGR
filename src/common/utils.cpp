@@ -1,5 +1,5 @@
 #include "utils.hpp"
-#include "common/DeviceManager.hpp"
+#include "src/common/DeviceManager.hpp"
 
 namespace common {
 namespace utils {

@@ -1,21 +1,56 @@
 #pragma once
-#include "types/SearchInfo.hpp"
-#include "common/FileBrowser.hpp"
-#include "common/utils.hpp"
-#include "common/Logger.hpp"
-#include "common/Semaphore.hpp"
-#include "common/FileReader.hpp"
-#include <iostream>
+#include "src/types/SearchInfo.hpp"
+#include "src/common/FileBrowser.hpp"
+#include "src/common/utils.hpp"
+#include "src/common/Semaphore.hpp"
+#include "src/common/FileReader.hpp"
 #include <vector>
 
 #ifdef __WINDOWS__
-#include <mingw.mutex.h>
 #include <mingw.thread.h>
+#include <windows.h>
 #else
 #include <thread>
 #endif
 
-void searchTextInFiles(const std::string& text, std::queue<types::FileInfo>& files, common::Semaphore& sem)
+bool isBinaryLine(const std::string& line)
+{
+    for (const auto ch : line)
+    {
+        if(ch == 0x00 || ch == 0x01 || ch == 0x02 || ch == 0x03 || ch == 0x04 ||
+           ch == 0x05 || ch == 0x06 || ch == 0x07)
+        return true;
+    }
+    return false;
+}
+
+bool isMatchedFileType(const std::string& fileName, const std::string& type)
+{
+    const auto typeLength = type.size();
+    const auto fileNameLength = fileName.size();
+    if (fileNameLength <= typeLength)
+    {
+        return false;
+    }
+    return fileName.substr(fileNameLength-typeLength) == type;
+}
+
+bool isValidSearchingFile(const std::string& fileName)
+{
+    if (isMatchedFileType(fileName, ".doc") || isMatchedFileType(fileName, ".exe") ||
+        isMatchedFileType(fileName, ".dll") || isMatchedFileType(fileName, ".o") ||
+        isMatchedFileType(fileName, ".so") || isMatchedFileType(fileName, ".Mp4") ||
+        isMatchedFileType(fileName, ".mp4") || isMatchedFileType(fileName, ".pdf") ||
+        isMatchedFileType(fileName, ".ppt") || isMatchedFileType(fileName, ".avi") ||
+        isMatchedFileType(fileName, ".mp3") || isMatchedFileType(fileName, ".a"))
+    {
+        return false;
+    }
+    return true;
+}
+
+void searchTextInFiles(const std::string& text, std::queue<types::FileInfo>& files,
+                       common::Semaphore& sem)
 {
     while (files.size())
     {
@@ -29,6 +64,7 @@ void searchTextInFiles(const std::string& text, std::queue<types::FileInfo>& fil
         while (!reader.isReadToEnd())
         {
             std::string line = reader.readLine();
+            if (isBinaryLine(line)) { break; }
             ++lineCounter;
             if (text.size() <= line.size() && line.find(text) != std::string::npos)
             {
@@ -37,8 +73,8 @@ void searchTextInFiles(const std::string& text, std::queue<types::FileInfo>& fil
                     findoutText = true;
                     LOG_INFO << "\n>>>" << file.getCompletePath() << '\n';
                 }
-                LOG_INFO << "  " << lineCounter << " : " << line << '\n';
-                //TODO: consider whether there is a risk while all threads use LOG_INFO
+                LOG_INFO << std::setw(5) << lineCounter << ": ";
+                LOG_INFO << line << '\n';
             }
         }
     }
@@ -48,35 +84,36 @@ class TextSearcher
 {
 public:
     TextSearcher(const std::string& text, const types::SearchField& field)
-    : text{text}, searchField(field), fileBrowser(searchField.dir), sem("TextSearcher", 1, 1)
+    : text{text}, searchField(field), fileBrowser(searchField.dir)
     {}
 
     void search()
     {
         auto searchFilter = [&](const std::string& fileName)
         {
-            if (searchField.files.size() == 0) {return true;}
-            if (fileName.find(".doc") != std::string::npos || fileName.find(".excel") != std::string::npos ||
-                fileName.find(".exe") != std::string::npos || fileName.find(".out") != std::string::npos ||
-                fileName.find(".docx") != std::string::npos || fileName.find(".bin") != std::string::npos ||
-                fileName.find(".dll") != std::string::npos || fileName.find(".so") != std::string::npos ||
-                fileName.find(".pdf") != std::string::npos || fileName.find(".ppt") != std::string::npos ||
-                fileName.find(".mp4") != std::string::npos || fileName.find(".avi") != std::string::npos ||
-                fileName.find(".Mp4"))
+            if (!isValidSearchingFile(fileName))
             {
                 return false;
             }
             for (const auto& item : searchField.files)
             {
-                if (fileName.size() >= item.size() && fileName.find(item) != std::string::npos)
+                if (fileName.size() < item.size() || fileName.find(item) == std::string::npos)
                 {
-                    return true;
+                    return false;
                 }
             }
-            return false;
+            return true;
         };
         auto files = fileBrowser.extractFiles(searchFilter);
         const auto parallelThreadNum = common::utils::getNecessaryThreadNumbers(files.size());
+
+        #ifdef __WINDOWS__
+            auto sem = common::WindowsSemaphore("TextSearcher", 1, 1);
+        #else
+            sem_t sem_t_;
+            auto sem = common::LinuxSemaphore(sem_t_);
+        #endif
+
         std::vector<std::thread> threads;
         for (auto i = 0; i < parallelThreadNum; ++i)
         {
@@ -92,5 +129,4 @@ private:
     const std::string text;
     types::SearchField searchField;
     common::FileBrowser fileBrowser;
-    common::Semaphore sem;
 };

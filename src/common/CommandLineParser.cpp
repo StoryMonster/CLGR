@@ -1,5 +1,11 @@
 #include "CommandLineParser.hpp"
-#include "types/SearchInfo.hpp"
+#include "src/types/SearchInfo.hpp"
+
+#ifdef __WINDOWS__
+#include <direct.h>
+#else
+#include <unistd.h>
+#endif
 
 namespace common{
 

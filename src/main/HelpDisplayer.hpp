@@ -1,5 +1,4 @@
 #pragma once
-#include "common/Logger.hpp"
 
 class HelpDisplayer
 {

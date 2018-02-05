@@ -1,8 +1,7 @@
 #pragma once
-#include "common/Logger.hpp"
-#include "common/FileBrowser.hpp"
-#include "types/SearchInfo.hpp"
-#include "types/FileInfo.hpp"
+#include "src/common/FileBrowser.hpp"
+#include "src/types/SearchInfo.hpp"
+#include "src/types/FileInfo.hpp"
 
 class FileSearcher
 {

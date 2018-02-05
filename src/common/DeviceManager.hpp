@@ -3,6 +3,8 @@
 
 #ifdef __WINDOWS__
 #include <windows.h>
+#else
+#include "FileReader.hpp"
 #endif
 
 namespace common{
@@ -13,6 +15,7 @@ public:
     virtual const std::uint32_t getProcessorNumbers() = 0;
 };
 
+#ifdef __WINDOWS__
 class WindowsDeviceManager : public DeviceManager
 {
 public:
@@ -30,6 +33,7 @@ private:
     SYSTEM_INFO systemInfo;
 };
 
+#else
 class LinuxDeviceManager : public DeviceManager
 {
 public:
@@ -39,8 +43,19 @@ public:
 
     const std::uint32_t getProcessorNumbers() override
     {
-        return 4;      //TODO: complete later
+        const auto deviceInfoFile = "/proc/cpuinfo";
+        FileReader reader(deviceInfoFile);
+        std::uint32_t processorCounter = 0;
+        while (!reader.isReadToEnd())
+        {
+            if (0 == reader.readLine().size())
+            {
+                ++processorCounter;
+            }
+        }
+        return processorCounter;
     }
-
 };
+#endif
+
 }

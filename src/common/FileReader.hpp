@@ -1,7 +1,7 @@
 #pragma once
-#include "Logger.hpp"
 #include <fstream>
 #include <cstdint>
+#include <stdexcept>
 
 namespace common {
 
@@ -14,10 +14,9 @@ public:
         {
             reader.open(fileName);
         }
-        catch(std::ofstream::failure)
+        catch(std::ofstream::failure&)
         {
-            LOG_ERROR << "Open file " << fileName << "failed! \n";
-            exit(-1);
+            throw std::runtime_error("open file error");
         }
     }
 
@@ -33,7 +32,6 @@ public:
     {
         if (isReadToEnd())
         {
-        	LOG_WARN << "File reader has read to the end of file!";
             return "";
         }
         std::string res;
