@@ -6,18 +6,16 @@ endif
 objs = Clgr.o CommandLineParser.o FileBrowser.o utils.o Semaphore.o
 CLGR: ${objs}
 	@echo "building CLGR"
-	@g++ ${opts} -g ${objs} -o CLGR 
+	@g++ ${opts} -g ${objs} -o CLGR
 	@echo "built CLGR"
     ifeq (${platform}, linux)
 		@mkdir -p build build/bin
 		@mv *.o build/
 		@mv CLGR build/bin
     else
-		@md build build/bin
-		@move *.o build/*.o
-		@move CLGR.exe build/bin/CLGR.exe
+		@mkdir build && mkdir build/bin && mv *.o build/ && mv CLGR.exe build/bin/CLGR.exe
     endif
-	
+
 Semaphore.o: src/common/Semaphore.cpp src/common/Semaphore.hpp
 	@echo "building Semaphore.o"
 	@g++ ${opts} -c src/common/Semaphore.cpp

@@ -1,13 +1,13 @@
 #pragma once
+#include <iostream>
 
 class VersionControler
 {
 public:
     static void showVersion()
     {
-        LOG_INFO << "\n";
-        LOG_INFO << "CLGR-V3.1      2018-02-05  dochen\n";
-        LOG_INFO << "This version provides a more convinient function, "
-                 << "you can find text in specific directories and specific files\n";
+        std::cout << "\n";
+        std::cout << "CLGR-V3.2      2018-04-03  dochen\n";
+        std::cout << "This version is to improve clgr's file search speed" << std::endl;
     }
 };

@@ -1,17 +1,18 @@
 #pragma once
+#include <iostream>
 
 class HelpDisplayer
 {
 public:
     static void display()
     {
-        LOG_INFO << "\n";
-        LOG_INFO << "help for CLGR:\n";
-        LOG_INFO << "-t=<text>    to specify text needs to search\n";
-        LOG_INFO << "-f=<file>    to specify file needs to search, if "
-                 << "text is specified, it means to search text in this file\n";
-        LOG_INFO << "-d=<dir>     to specify where to search, default value is current directory\n";
-        LOG_INFO << "--help       to show helps\n";
-        LOG_INFO << "--version    to show CLGR version\n"; 
+        std::cout << "\n";
+        std::cout << "help for CLGR:\n";
+        std::cout << "-t=<text>    to limit text search field\n";
+        std::cout << "-f=<file>    to limit text and file search field\n";
+        std::cout << "-d=<dir>     to specify where to start searching, default value is current directory\n";
+        std::cout << "--help       to show helps\n";
+        std::cout << "--version    to show CLGR version\n";
+        std::cout << std::endl;
     }
 };

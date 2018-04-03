@@ -23,12 +23,7 @@ public:
             }
             return false;
         };
-        auto files = fileBrowser.extractFiles(searchFilter);
-        while (files.size())
-        {
-            LOG_INFO << files.front() << "\n";
-            files.pop();
-        }
+        fileBrowser.showFiles(searchFilter);
     }
 
 private:

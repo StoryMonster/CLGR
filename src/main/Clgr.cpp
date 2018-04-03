@@ -1,4 +1,3 @@
-#include "src/common/Logger.hpp"
 #include "src/common/CommandLineParser.hpp"
 #include "src/types/SearchInfo.hpp"
 #include "FileSearcher.hpp"

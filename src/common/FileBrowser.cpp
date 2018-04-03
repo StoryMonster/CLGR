@@ -1,6 +1,7 @@
 #include "FileBrowser.hpp"
 #include "src/types/FileInfo.hpp"
 #include <cstring>
+#include <iostream>
 
 #ifdef __WINDOWS__
 #include <io.h>
@@ -38,7 +39,7 @@ std::queue<types::FileInfo> FileBrowser::extractFiles(const Filter filter)
                     if (strcmp(fileInfo.name, ".") !=0 && strcmp(fileInfo.name, "..") != 0)
                     {
                         folders.push(path + "\\" + fileInfo.name);
-                    } 
+                    }
                 }
                 else if (filter(fileInfo.name))
                 {
@@ -49,6 +50,37 @@ std::queue<types::FileInfo> FileBrowser::extractFiles(const Filter filter)
         }
     }
     return files;
+}
+
+void FileBrowser::showFiles(const Filter filter)
+{
+    std::queue<std::string> folders;
+    struct _finddata_t fileInfo;
+    folders.push(dir);
+    while(folders.size())
+    {
+        std::string path = folders.front();
+        folders.pop();
+        long hFile = _findfirst((path + "/*").c_str(), &fileInfo);
+        if (hFile != -1)
+        {
+            do
+            {
+                if (fileInfo.attrib & _A_SUBDIR)
+                {
+                    if (strcmp(fileInfo.name, ".") !=0 && strcmp(fileInfo.name, "..") != 0)
+                    {
+                        folders.push(path + "\\" + fileInfo.name);
+                    }
+                }
+                else if (filter(fileInfo.name))
+                {
+                    std::cout << types::FileInfo(fileInfo.name, path, fileInfo.size) << std::endl;
+                }
+            }while (_findnext(hFile, &fileInfo) == 0);
+            _findclose(hFile);
+        }
+    }
 }
 
 #else
@@ -83,6 +115,37 @@ std::queue<types::FileInfo> FileBrowser::extractFiles(const Filter filter)
         closedir(pFolder);
     }
     return files;
+}
+
+void FileBrowser::showFiles(const Filter filter)
+{
+    std::queue<std::string> folders;
+    folders.push(dir);
+    while (folders.size())
+    {
+        std::string folder = folders.front();
+        folders.pop();
+        DIR* pFolder = opendir(folder.c_str());
+        while (true)
+        {
+            struct dirent* file = readdir(pFolder);
+            if (file == NULL) { break; }
+            if (strcmp(file->d_name, "..") == 0 || strcmp(file->d_name, ".") == 0) { continue; }
+            if (file->d_type == DT_DIR)
+            {
+                folders.push(folder + "/" + file->d_name);
+            }
+            else if (filter(file->d_name))
+            {
+                struct stat buf;
+                std::string path = folder + "/" + file->d_name;
+                lstat(path.c_str(), &buf);
+                const auto size = buf.st_size;
+                std::cout << types::FileInfo(file->d_name, folder, size) << std::endl;
+            }
+        }
+        closedir(pFolder);
+    }
 }
 #endif
 }

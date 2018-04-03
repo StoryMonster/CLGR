@@ -5,6 +5,8 @@
 #include "src/common/Semaphore.hpp"
 #include "src/common/FileReader.hpp"
 #include <vector>
+#include <iomanip>
+#include <iostream>
 
 #ifdef __WINDOWS__
 #include <mingw.thread.h>
@@ -12,17 +14,6 @@
 #else
 #include <thread>
 #endif
-
-bool isBinaryLine(const std::string& line)
-{
-    for (const auto ch : line)
-    {
-        if(ch == 0x00 || ch == 0x01 || ch == 0x02 || ch == 0x03 || ch == 0x04 ||
-           ch == 0x05 || ch == 0x06 || ch == 0x07)
-        return true;
-    }
-    return false;
-}
 
 bool isMatchedFileType(const std::string& fileName, const std::string& type)
 {
@@ -32,21 +23,28 @@ bool isMatchedFileType(const std::string& fileName, const std::string& type)
     {
         return false;
     }
-    return fileName.substr(fileNameLength-typeLength) == type;
+    return common::utils::toLower(fileName.substr(fileNameLength-typeLength)) == type;
 }
 
 bool isValidSearchingFile(const std::string& fileName)
 {
-    if (isMatchedFileType(fileName, ".doc") || isMatchedFileType(fileName, ".exe") ||
-        isMatchedFileType(fileName, ".dll") || isMatchedFileType(fileName, ".o") ||
-        isMatchedFileType(fileName, ".so") || isMatchedFileType(fileName, ".Mp4") ||
-        isMatchedFileType(fileName, ".mp4") || isMatchedFileType(fileName, ".pdf") ||
-        isMatchedFileType(fileName, ".ppt") || isMatchedFileType(fileName, ".avi") ||
-        isMatchedFileType(fileName, ".mp3") || isMatchedFileType(fileName, ".a"))
-    {
-        return false;
-    }
-    return true;
+    return !(
+        // libs
+        isMatchedFileType(fileName, ".dll") || isMatchedFileType(fileName, ".so") || isMatchedFileType(fileName, ".a") ||
+        // binary files
+        isMatchedFileType(fileName, ".exe") || isMatchedFileType(fileName, ".out") || isMatchedFileType(fileName, ".bin") ||
+        isMatchedFileType(fileName, ".apk") ||
+        // microsoft office
+        isMatchedFileType(fileName, ".doc") || isMatchedFileType(fileName, ".pptx") || isMatchedFileType(fileName, ".ppt") ||
+        isMatchedFileType(fileName, ".pdf") || isMatchedFileType(fileName, ".xlsx") || isMatchedFileType(fileName, ".xlsm") ||
+        isMatchedFileType(fileName, ".docx") ||
+        // vedios
+        isMatchedFileType(fileName, ".mp4") || isMatchedFileType(fileName, ".avi") || isMatchedFileType(fileName, ".rmvb") ||
+        // music
+        isMatchedFileType(fileName, ".mp3") || isMatchedFileType(fileName, ".wmv") ||
+        // others
+        isMatchedFileType(fileName, ".o") || isMatchedFileType(fileName, ".zip") || isMatchedFileType(fileName, ".tar")
+        );
 }
 
 void searchTextInFiles(const std::string& text, std::queue<types::FileInfo>& files,
@@ -64,17 +62,17 @@ void searchTextInFiles(const std::string& text, std::queue<types::FileInfo>& fil
         while (!reader.isReadToEnd())
         {
             std::string line = reader.readLine();
-            if (isBinaryLine(line)) { break; }
+            if (common::utils::isBinaryLine(line)) { break; }
             ++lineCounter;
             if (text.size() <= line.size() && line.find(text) != std::string::npos)
             {
                 if (!findoutText)
                 {
                     findoutText = true;
-                    LOG_INFO << "\n>>>" << file.getCompletePath() << '\n';
+                    std::cout << "\n>>>" << file.getCompletePath() << '\n';
                 }
-                LOG_INFO << std::setw(5) << lineCounter << ": ";
-                LOG_INFO << line << '\n';
+                std::cout << std::setw(5) << lineCounter << ": ";
+                std::cout << line << '\n';
             }
         }
     }
@@ -97,12 +95,12 @@ public:
             }
             for (const auto& item : searchField.files)
             {
-                if (fileName.size() < item.size() || fileName.find(item) == std::string::npos)
+                if (fileName.size() >= item.size() && fileName.find(item) != std::string::npos)
                 {
-                    return false;
+                    return true;
                 }
             }
-            return true;
+            return false;
         };
         auto files = fileBrowser.extractFiles(searchFilter);
         const auto parallelThreadNum = common::utils::getNecessaryThreadNumbers(files.size());
