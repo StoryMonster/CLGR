@@ -7,6 +7,7 @@
 #include <vector>
 #include <iomanip>
 #include <iostream>
+#include <sstream>
 
 #ifdef __WINDOWS__
 #include <mingw.thread.h>
@@ -59,6 +60,7 @@ void searchTextInFiles(const std::string& text, std::queue<types::FileInfo>& fil
         common::FileReader reader(file.getCompletePath());
         std::uint32_t lineCounter = 0;
         bool findoutText = false;
+        std::stringstream resutToPrint;
         while (!reader.isReadToEnd())
         {
             std::string line = reader.readLine();
@@ -69,12 +71,14 @@ void searchTextInFiles(const std::string& text, std::queue<types::FileInfo>& fil
                 if (!findoutText)
                 {
                     findoutText = true;
-                    std::cout << "\n>>>" << file.getCompletePath() << '\n';
+                    resutToPrint << "\n>>>" << file.getCompletePath() << '\n';
+                    //std::cout << "\n>>>" << file.getCompletePath() << '\n';
                 }
-                std::cout << std::setw(5) << lineCounter << ": ";
-                std::cout << line << '\n';
+                resutToPrint << std::setw(5) << lineCounter << ": ";
+                resutToPrint << line << '\n';
             }
         }
+        std::cout << resutToPrint.str();
     }
 }
 
@@ -89,10 +93,8 @@ public:
     {
         auto searchFilter = [&](const std::string& fileName)
         {
-            if (!isValidSearchingFile(fileName))
-            {
-                return false;
-            }
+            if (searchField.files.size() == 0) { return true; }
+            if (!isValidSearchingFile(fileName)) { return false; }
             for (const auto& item : searchField.files)
             {
                 if (fileName.size() >= item.size() && fileName.find(item) != std::string::npos)

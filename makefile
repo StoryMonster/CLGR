@@ -8,13 +8,6 @@ CLGR: ${objs}
 	@echo "building CLGR"
 	@g++ ${opts} -g ${objs} -o CLGR
 	@echo "built CLGR"
-    ifeq (${platform}, linux)
-		@mkdir -p build build/bin
-		@mv *.o build/
-		@mv CLGR build/bin
-    else
-		@mkdir build && mkdir build/bin && mv *.o build/ && mv CLGR.exe build/bin/CLGR.exe
-    endif
 
 Semaphore.o: src/common/Semaphore.cpp src/common/Semaphore.hpp
 	@echo "building Semaphore.o"
