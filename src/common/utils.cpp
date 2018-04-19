@@ -30,11 +30,9 @@ std::string toLower(const std::string& str)
 
 bool isBinaryLine(const std::string& line)
 {
-    for (const auto ch : line)
+    for (const auto& ch : line)
     {
-        if(ch == 0x00 || ch == 0x01 || ch == 0x02 || ch == 0x03 || ch == 0x04 ||
-           ch == 0x05 || ch == 0x06 || ch == 0x07)
-        return true;
+        if (ch < 0x08) { return true; }
     }
     return false;
 }

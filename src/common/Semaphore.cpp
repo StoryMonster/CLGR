@@ -1,5 +1,5 @@
 #include "Semaphore.hpp"
-#include <stdexcept>
+#include "src/exceptions/SemaphoreError.hpp"
 
 namespace common{
 
@@ -9,12 +9,12 @@ WindowsSemaphore::WindowsSemaphore(const std::string& name, const std::int32_t i
     hdl = CreateSemaphore(NULL, initCount, maxCount, name.c_str());
     if(hdl == 0 || ERROR_ALREADY_EXISTS == GetLastError())
     {
-        throw std::runtime_error("Create semaphore error, and it may cause text search error!");
+        throw exceptions::SemaphoreInitError("Create semaphore error, and it may cause text search error!");
     }
     hdl = OpenSemaphore(SEMAPHORE_ALL_ACCESS, false, name.c_str());
     if(!hdl)
     {
-        throw std::runtime_error("Open semaphore error, and it may cause text search error!");
+        throw exceptions::SemaphoreInitError("Open semaphore error, and it may cause text search error!");
     }
 }
 
@@ -39,7 +39,7 @@ LinuxSemaphore::LinuxSemaphore(sem_t& sem, const std::uint32_t initCount)
 {
     if (0 != sem_init(&sem, 0, initCount))
     {
-        throw std::runtime_error("Create semaphore error, and it may cause text search error!");
+        throw exceptions::SemaphoreInitError("Create semaphore error, and it may cause text search error!");
     }
 }
 
@@ -50,7 +50,10 @@ LinuxSemaphore::~LinuxSemaphore()
 
 void LinuxSemaphore::wait()
 {
-    sem_wait(&sem);
+    if (0 != sem_trywait(&sem))
+    {
+        throw exceptions::SemaphoreWaitError("SemaphoreWaitError");
+    }
 }
 
 void LinuxSemaphore::release()

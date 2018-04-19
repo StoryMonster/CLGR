@@ -4,6 +4,7 @@
 #include "src/common/utils.hpp"
 #include "src/common/Semaphore.hpp"
 #include "src/common/FileReader.hpp"
+#include "src/exceptions/SemaphoreError.hpp"
 #include <vector>
 #include <iomanip>
 #include <iostream>
@@ -39,7 +40,7 @@ bool isValidSearchingFile(const std::string& fileName)
         isMatchedFileType(fileName, ".doc") || isMatchedFileType(fileName, ".pptx") || isMatchedFileType(fileName, ".ppt") ||
         isMatchedFileType(fileName, ".pdf") || isMatchedFileType(fileName, ".xlsx") || isMatchedFileType(fileName, ".xlsm") ||
         isMatchedFileType(fileName, ".docx") ||
-        // vedios
+        // vedio
         isMatchedFileType(fileName, ".mp4") || isMatchedFileType(fileName, ".avi") || isMatchedFileType(fileName, ".rmvb") ||
         // music
         isMatchedFileType(fileName, ".mp3") || isMatchedFileType(fileName, ".wmv") ||
@@ -51,16 +52,17 @@ bool isValidSearchingFile(const std::string& fileName)
 void searchTextInFiles(const std::string& text, std::queue<types::FileInfo>& files,
                        common::Semaphore& sem)
 {
-    while (files.size())
+    while (files.size() != 0)
     {
-        sem.wait();
-        auto file = files.front();
+        try { sem.wait(); }
+        catch (const exceptions::SemaphoreWaitError&) { continue; }
+        const auto file = files.front();
         files.pop();
         sem.release();
         common::FileReader reader(file.getCompletePath());
         std::uint32_t lineCounter = 0;
         bool findoutText = false;
-        std::stringstream resutToPrint;
+        std::stringstream resultToPrint;
         while (!reader.isReadToEnd())
         {
             std::string line = reader.readLine();
@@ -71,14 +73,13 @@ void searchTextInFiles(const std::string& text, std::queue<types::FileInfo>& fil
                 if (!findoutText)
                 {
                     findoutText = true;
-                    resutToPrint << "\n>>>" << file.getCompletePath() << '\n';
-                    //std::cout << "\n>>>" << file.getCompletePath() << '\n';
+                    resultToPrint << ">>>" << file.getCompletePath() << '\n';
                 }
-                resutToPrint << std::setw(5) << lineCounter << ": ";
-                resutToPrint << line << '\n';
+                resultToPrint << std::setw(5) << lineCounter << ": ";
+                resultToPrint << line << '\n';
             }
         }
-        std::cout << resutToPrint.str();
+        std::cout << resultToPrint.str() << std::endl;
     }
 }
 
@@ -97,7 +98,7 @@ public:
             if (!isValidSearchingFile(fileName)) { return false; }
             for (const auto& item : searchField.files)
             {
-                if (fileName.size() >= item.size() && fileName.find(item) != std::string::npos)
+                if (fileName.find(item) != std::string::npos)
                 {
                     return true;
                 }

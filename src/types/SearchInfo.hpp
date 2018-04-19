@@ -16,7 +16,7 @@ enum class SearchType
 struct SearchField
 {
     std::string dir;
-    std::vector<std::string> files;
+    std::vector<std::string> files{};
 };
 /*
 SearchField::files:
