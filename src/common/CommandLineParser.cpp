@@ -1,5 +1,6 @@
 #include "CommandLineParser.hpp"
 #include "src/types/SearchInfo.hpp"
+#include <cstring>
 
 #ifdef __WINDOWS__
 #include <direct.h>
@@ -21,6 +22,7 @@ types::SearchInfo CommandLineParser::parse()
 {
     std::string text, dir;
     std::vector<std::string> files;
+    types::SearchOptions options;
     for (const auto& item : params)
     {
         if (item.find("--help") == 0 && item.size() == std::string("--help").size())
@@ -43,13 +45,32 @@ types::SearchInfo CommandLineParser::parse()
         {
             dir = item.substr(3);
         }
+        else if (item.find("--opts=") == 0)
+        {
+            options = getSearchOptions(item);
+        }
     }
-    return createSearchInfo(text, files, dir);
+    return createSearchInfo(text, files, dir, options);
 }
 
+types::SearchOptions CommandLineParser::getSearchOptions(const std::string& str)
+{
+    types::SearchOptions options;
+    const auto opts = str.substr(strlen("--opts="));
+    for (const auto opt : opts)
+    {
+        switch (opt)
+        {
+            case 'c': options.caseSensitive = true; break;
+            case 'm': options.matchWholeWord = true; break;
+            default: break;
+        }
+    }
+    return options;
+}
 
 types::SearchInfo CommandLineParser::createSearchInfo(const std::string& text, const std::vector<std::string>& files,
-                                   const std::string& dir)
+                                                      const std::string& dir, const types::SearchOptions& options)
 {
     types::SearchInfo info;
     info.type = (text.size() > 0) ? types::SearchType::text : types::SearchType::file;
@@ -57,6 +78,7 @@ types::SearchInfo CommandLineParser::createSearchInfo(const std::string& text, c
     info.field.dir = (dir.size() > 0) ? dir : getcwd(NULL, 0);
     info.field.files.resize(files.size());
     std::copy(files.cbegin(), files.cend(), info.field.files.begin());
+    info.options = options;
     return info;
 }
 }

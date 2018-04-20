@@ -37,5 +37,30 @@ bool isBinaryLine(const std::string& line)
     return false;
 }
 
+bool isWordWholeMatched(const std::string& word, const std::string& str)
+{
+    const auto position = str.find(word);
+    if (position == std::string::npos) { return false; }
+    if (position != 0)
+    {
+        if ((str[position-1] >= '0' && str[position-1] <= '9') ||
+            (str[position-1] >= 'A' && str[position-1] <= 'Z') ||
+            (str[position-1] >= 'a' && str[position-1] <= 'z'))
+        {
+            return false;
+        }
+    }
+    const auto endPos = position + word.size();
+    if (endPos < str.size())
+    {
+        if ((str[endPos] >= '0' && str[endPos] <= '9') ||
+            (str[endPos] >= 'A' && str[endPos] <= 'Z') ||
+            (str[endPos] >= 'a' && str[endPos] <= 'z'))
+        {
+            return false;
+        }
+    }
+    return true;
+}
 }
 }

@@ -13,6 +13,12 @@ enum class SearchType
     version
 };
 
+struct SearchOptions
+{
+    bool caseSensitive = false;
+    bool matchWholeWord = false;
+};
+
 struct SearchField
 {
     std::string dir;
@@ -29,6 +35,7 @@ struct SearchInfo
     SearchType type;
     std::string text;    //only for test search
     SearchField field;
+    SearchOptions options;
 };
 
 }

@@ -5,6 +5,7 @@
 
 namespace types
 {
+struct SearchOptions;
 struct SearchInfo;
 }
 
@@ -17,8 +18,9 @@ public:
     types::SearchInfo parse();
 
 private:
-    types::SearchInfo createSearchInfo(const std::string&, const std::vector<std::string>&, const std::string&);
-
+    types::SearchInfo createSearchInfo(const std::string&, const std::vector<std::string>&,
+                                       const std::string&, const types::SearchOptions&);
+    types::SearchOptions getSearchOptions(const std::string&);
 private:
     std::vector<std::string> params;
 };

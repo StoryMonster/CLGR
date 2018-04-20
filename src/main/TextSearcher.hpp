@@ -49,8 +49,51 @@ bool isValidSearchingFile(const std::string& fileName)
         );
 }
 
-void searchTextInFiles(const std::string& text, std::queue<types::FileInfo>& files,
-                       common::Semaphore& sem)
+void addLineIntoStream(std::stringstream& stream, const std::string& line, std::uint32_t lineCounter)
+{
+    stream << std::setw(5) << lineCounter << ": ";
+    stream << line << '\n';
+}
+
+void addFileNameIntoStream(std::stringstream& stream, const std::string& fileName)
+{
+    stream << ">>>" << fileName << '\n';
+}
+
+bool isTheLineMatched(const std::string& text, const std::string& line, bool matchWholeWord)
+{
+    return matchWholeWord ? common::utils::isWordWholeMatched(text, line) : (line.find(text) != std::string::npos);
+}
+
+void searchTextInFileAndShowResult(const types::FileInfo& file, const std::string& text, const types::SearchOptions& options)
+{
+    common::FileReader reader(file.getCompletePath());
+    bool findoutText = false;
+    std::stringstream resultToPrint{};
+    const auto _text = options.caseSensitive ? text : common::utils::toLower(text);
+    for (std::uint32_t lineCounter = 1; !reader.isReadToEnd(); ++lineCounter)
+    {
+        const auto line = reader.readLine();
+        if (common::utils::isBinaryLine(line)) { break; }
+        const auto _line = options.caseSensitive ? line : common::utils::toLower(line);
+        if (isTheLineMatched(_text, _line, options.matchWholeWord))
+        {
+            if (!findoutText)
+            {
+                findoutText = true;
+                addFileNameIntoStream(resultToPrint, file.getCompletePath());
+            }
+            else
+            {
+                addLineIntoStream(resultToPrint, line, lineCounter);
+            }
+        }
+    }
+    if (findoutText) { std::cout << resultToPrint.str() << std::endl; }
+}
+
+void searchTextInFiles(const std::string& text, const types::SearchOptions& options,
+                       std::queue<types::FileInfo>& files, common::Semaphore& sem)
 {
     while (files.size() != 0)
     {
@@ -59,35 +102,15 @@ void searchTextInFiles(const std::string& text, std::queue<types::FileInfo>& fil
         const auto file = files.front();
         files.pop();
         sem.release();
-        common::FileReader reader(file.getCompletePath());
-        std::uint32_t lineCounter = 0;
-        bool findoutText = false;
-        std::stringstream resultToPrint;
-        while (!reader.isReadToEnd())
-        {
-            std::string line = reader.readLine();
-            if (common::utils::isBinaryLine(line)) { break; }
-            ++lineCounter;
-            if (text.size() <= line.size() && line.find(text) != std::string::npos)
-            {
-                if (!findoutText)
-                {
-                    findoutText = true;
-                    resultToPrint << ">>>" << file.getCompletePath() << '\n';
-                }
-                resultToPrint << std::setw(5) << lineCounter << ": ";
-                resultToPrint << line << '\n';
-            }
-        }
-        std::cout << resultToPrint.str() << std::endl;
+        searchTextInFileAndShowResult(file, text, options);   
     }
 }
 
 class TextSearcher
 {
 public:
-    TextSearcher(const std::string& text, const types::SearchField& field)
-    : text{text}, searchField(field), fileBrowser(searchField.dir)
+    TextSearcher(const std::string& text, const types::SearchField& field, const types::SearchOptions& options)
+    : text{text}, searchField(field), options(options), fileBrowser(searchField.dir)
     {}
 
     void search()
@@ -96,9 +119,11 @@ public:
         {
             if (searchField.files.size() == 0) { return true; }
             if (!isValidSearchingFile(fileName)) { return false; }
+            const auto _fileName = common::utils::toLower(fileName);
             for (const auto& item : searchField.files)
             {
-                if (fileName.find(item) != std::string::npos)
+                const auto _item = common::utils::toLower(item);
+                if (_fileName.find(_item) != std::string::npos)
                 {
                     return true;
                 }
@@ -118,7 +143,7 @@ public:
         std::vector<std::thread> threads;
         for (auto i = 0; i < parallelThreadNum; ++i)
         {
-            threads.emplace_back(std::thread(searchTextInFiles, text, std::ref(files), std::ref(sem)));
+            threads.emplace_back(std::thread(searchTextInFiles, text, options, std::ref(files), std::ref(sem)));
         }
         for (auto i = 0; i < parallelThreadNum; ++i)
         {
@@ -129,5 +154,6 @@ public:
 private:
     const std::string text;
     types::SearchField searchField;
+    types::SearchOptions options;
     common::FileBrowser fileBrowser;
 };
