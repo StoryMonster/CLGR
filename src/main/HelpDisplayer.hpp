@@ -13,9 +13,9 @@ public:
         std::cout << "-d=<dir>     to specify where to start searching, default value is current directory\n";
         std::cout << "--help       to show helps\n";
         std::cout << "--version    to show CLGR version\n";
-        std::cout << "--opts       to specify search options\n";
-        std::cout << "             c: case sensitive\n";
-        std::cout << "             m: match whole world\n";
+        std::cout << "-o=<options> to specify search options\n";
+        std::cout << "             c: case sensitive, default false\n";
+        std::cout << "             m: match whole world, default false\n";
         std::cout << std::endl;
     }
 };

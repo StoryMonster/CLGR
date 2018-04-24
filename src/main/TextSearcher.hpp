@@ -82,6 +82,7 @@ void searchTextInFileAndShowResult(const types::FileInfo& file, const std::strin
             {
                 findoutText = true;
                 addFileNameIntoStream(resultToPrint, file.getCompletePath());
+                addLineIntoStream(resultToPrint, line, lineCounter);
             }
             else
             {
@@ -102,7 +103,7 @@ void searchTextInFiles(const std::string& text, const types::SearchOptions& opti
         const auto file = files.front();
         files.pop();
         sem.release();
-        searchTextInFileAndShowResult(file, text, options);   
+        searchTextInFileAndShowResult(file, text, options);
     }
 }
 

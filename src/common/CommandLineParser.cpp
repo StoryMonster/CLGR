@@ -1,5 +1,6 @@
 #include "CommandLineParser.hpp"
 #include "src/types/SearchInfo.hpp"
+#include "src/exceptions/ParserError.hpp"
 #include <cstring>
 
 #ifdef __WINDOWS__
@@ -45,9 +46,13 @@ types::SearchInfo CommandLineParser::parse()
         {
             dir = item.substr(3);
         }
-        else if (item.find("--opts=") == 0)
+        else if (item.find("-o=") == 0)
         {
             options = getSearchOptions(item);
+        }
+        else
+        {
+            throw exceptions::ParserError("Unknow options! Use --help option to learn how to use");
         }
     }
     return createSearchInfo(text, files, dir, options);
