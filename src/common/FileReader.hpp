@@ -1,7 +1,7 @@
 #pragma once
 #include <fstream>
 #include <cstdint>
-#include <stdexcept>
+#include "src/exceptions/FileError.hpp"
 
 namespace common {
 
@@ -16,7 +16,7 @@ public:
         }
         catch(std::ofstream::failure&)
         {
-            throw std::runtime_error("open file error");
+            throw exceptions::OpenFileError(fileName);
         }
     }
 
@@ -27,7 +27,7 @@ public:
             reader.close();
         }
     }
-    
+
     const std::string readLine()
     {
         if (isReadToEnd())
@@ -44,7 +44,7 @@ public:
     {
         return lineNumber;
     }
-    
+
     const std::string getFileName() const
     {
         return fileName;

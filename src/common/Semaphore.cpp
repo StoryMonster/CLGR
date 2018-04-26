@@ -18,7 +18,7 @@ WindowsSemaphore::WindowsSemaphore(const std::string& name, const std::int32_t i
     }
 }
 
-WindowsSemaphore::~WindowsSemaphore() 
+WindowsSemaphore::~WindowsSemaphore()
 {
     CloseHandle(hdl);
 }
@@ -52,7 +52,7 @@ void LinuxSemaphore::wait()
 {
     if (0 != sem_trywait(&sem))
     {
-        throw exceptions::SemaphoreWaitError("SemaphoreWaitError");
+        throw exceptions::SemaphoreWaitError("Semaphore Wait Error");
     }
 }
 

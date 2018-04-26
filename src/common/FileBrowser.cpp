@@ -7,7 +7,6 @@
 #include <io.h>
 #else
 #include <sys/types.h>
-#include <sys/stat.h>
 #include <dirent.h>
 #include <unistd.h>
 #endif
@@ -43,7 +42,7 @@ std::queue<types::FileInfo> FileBrowser::extractFiles(const Filter filter)
                 }
                 else if (filter(fileInfo.name))
                 {
-                    files.push(types::FileInfo(fileInfo.name, path, fileInfo.size));
+                    files.push(types::FileInfo(fileInfo.name, path));
                 }
             }while (_findnext(hFile, &fileInfo) == 0);
             _findclose(hFile);
@@ -75,7 +74,7 @@ void FileBrowser::showFiles(const Filter filter)
                 }
                 else if (filter(fileInfo.name))
                 {
-                    std::cout << types::FileInfo(fileInfo.name, path, fileInfo.size) << std::endl;
+                    std::cout << types::FileInfo(fileInfo.name, path) << std::endl;
                 }
             }while (_findnext(hFile, &fileInfo) == 0);
             _findclose(hFile);
@@ -105,11 +104,7 @@ std::queue<types::FileInfo> FileBrowser::extractFiles(const Filter filter)
             }
             else if (filter(file->d_name))
             {
-                struct stat buf;
-                std::string path = folder + "/" + file->d_name;
-                lstat(path.c_str(), &buf);
-                const auto size = buf.st_size;
-                files.push(types::FileInfo(file->d_name, folder, size));
+                files.push(types::FileInfo(file->d_name, folder));
             }
         }
         closedir(pFolder);
@@ -137,11 +132,7 @@ void FileBrowser::showFiles(const Filter filter)
             }
             else if (filter(file->d_name))
             {
-                struct stat buf;
-                std::string path = folder + "/" + file->d_name;
-                lstat(path.c_str(), &buf);
-                const auto size = buf.st_size;
-                std::cout << types::FileInfo(file->d_name, folder, size) << std::endl;
+                std::cout << types::FileInfo(file->d_name, folder) << std::endl;
             }
         }
         closedir(pFolder);

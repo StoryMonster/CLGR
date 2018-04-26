@@ -8,8 +8,8 @@ namespace types{
 class FileInfo
 {
 public:
-    FileInfo(const std::string& fileName, const std::string& filePath, const std::uint32_t size)
-    : fileName{fileName}, filePath{filePath}, fileSize{size}
+    FileInfo(const std::string& fileName, const std::string& filePath)
+    : fileName{fileName}, filePath{filePath}
     {
     #ifdef __WINDOWS__
         completePath = filePath + "\\" + fileName;
@@ -25,11 +25,6 @@ public:
         return fileName;
     }
 
-    inline std::uint32_t getSize() const
-    {
-        return fileSize;
-    }
-
     inline std::string getPath() const
     {
         return filePath;
@@ -42,14 +37,13 @@ public:
 
     friend std::ostream& operator<<(std::ostream& os, const FileInfo& fi)
     {
-        os << fi.completePath << "    " << fi.fileSize << " bytes";
+        os << fi.completePath;
         return os;
     }
 
 private:
     std::string fileName;
     std::string filePath;
-    std::uint32_t fileSize;
     std::string completePath;
 };
 }

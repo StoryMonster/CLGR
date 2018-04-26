@@ -61,7 +61,7 @@ types::SearchInfo CommandLineParser::parse()
 types::SearchOptions CommandLineParser::getSearchOptions(const std::string& str)
 {
     types::SearchOptions options;
-    const auto opts = str.substr(strlen("--opts="));
+    const auto opts = str.substr(strlen("-o="));
     for (const auto opt : opts)
     {
         switch (opt)

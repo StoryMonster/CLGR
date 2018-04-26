@@ -65,7 +65,7 @@ bool isTheLineMatched(const std::string& text, const std::string& line, bool mat
     return matchWholeWord ? common::utils::isWordWholeMatched(text, line) : (line.find(text) != std::string::npos);
 }
 
-void searchTextInFileAndShowResult(const types::FileInfo& file, const std::string& text, const types::SearchOptions& options)
+void searchTextInFileAndShowResult(const types::FileInfo& file, const std::string& text, const types::SearchOptions& options) try
 {
     common::FileReader reader(file.getCompletePath());
     bool findoutText = false;
@@ -92,6 +92,10 @@ void searchTextInFileAndShowResult(const types::FileInfo& file, const std::strin
     }
     if (findoutText) { std::cout << resultToPrint.str() << std::endl; }
 }
+catch (const exceptions::FileError& err)
+{
+    std::cout << err.what() << std::endl;
+}
 
 void searchTextInFiles(const std::string& text, const types::SearchOptions& options,
                        std::queue<types::FileInfo>& files, common::Semaphore& sem)
@@ -99,7 +103,7 @@ void searchTextInFiles(const std::string& text, const types::SearchOptions& opti
     while (files.size() != 0)
     {
         try { sem.wait(); }
-        catch (const exceptions::SemaphoreWaitError&) { continue; }
+        catch (const exceptions::SemaphoreWaitError&) { sem.release(); continue; }
         const auto file = files.front();
         files.pop();
         sem.release();
