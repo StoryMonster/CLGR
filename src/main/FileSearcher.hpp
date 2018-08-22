@@ -3,24 +3,30 @@
 #include "src/types/SearchInfo.hpp"
 #include "src/types/FileInfo.hpp"
 #include "src/common/utils.hpp"
+#include "src/common/SearchFilterFactory.hpp"
+#include <memory>
 
 class FileSearcher
 {
 public:
     FileSearcher(const types::SearchField& field, const types::SearchOptions& options)
-    : field(field), options(options), fileBrowser(field.dir)
-    {}
+    : field(field)
+    , options(options)
+    , fileBrowser(field.dir)
+    , searchFilterFactory(options)
+    , caseSensitiveFilter{searchFilterFactory.createCaseSensitiveFilter()}
+    , wholeMatchFilter{searchFilterFactory.createWholeMatchFilter()}
+    {
+    }
 
     void search()
     {
         auto searchFilter = [&](const std::string& fileName) {
-            if (field.files.size() == 0) {return true;}
-            const auto _fileName = options.caseSensitive ? fileName : common::utils::toLower(fileName);
+            if (field.files.size() == 0) { return true; }
             for (const auto& item : field.files)
             {
-                const auto _item = options.caseSensitive ? item : common::utils::toLower(item);
-                if (options.matchWholeWord ? common::utils::isWordWholeMatched(_item, _fileName) :
-                                             (_fileName.find(_item) != std::string::npos))
+                if (not common::SearchFilterFactory::isBasicMatched(item, fileName)) { continue; }
+                if (wholeMatchFilter(item, fileName) && caseSensitiveFilter(item, fileName))
                 {
                     return true;
                 }
@@ -34,4 +40,7 @@ private:
     types::SearchField field;
     types::SearchOptions options;
     common::FileBrowser fileBrowser;
+    common::SearchFilterFactory searchFilterFactory;
+    common::CaseSensitiveFilter caseSensitiveFilter;
+    common::WholeMatchFilter wholeMatchFilter;
 };

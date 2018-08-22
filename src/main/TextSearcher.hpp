@@ -1,12 +1,13 @@
 #pragma once
 #include "src/types/SearchInfo.hpp"
+#include "src/types/LinesContainer.hpp"
 #include "src/common/FileBrowser.hpp"
 #include "src/common/utils.hpp"
 #include "src/common/Semaphore.hpp"
 #include "src/common/FileReader.hpp"
 #include "src/exceptions/SemaphoreError.hpp"
+#include "src/common/SearchFilterFactory.hpp"
 #include <vector>
-#include <iomanip>
 #include <iostream>
 #include <sstream>
 
@@ -17,47 +18,37 @@
 #include <thread>
 #endif
 
-bool isMatchedFileType(const std::string& fileName, const std::string& type)
+bool isMatchedFileType(const std::string& fileName, const std::vector<std::string> types)
 {
-    const auto typeLength = type.size();
     const auto fileNameLength = fileName.size();
-    if (fileNameLength <= typeLength)
+    for (const auto& type : types)
     {
-        return false;
+        const auto typeLength = type.size();
+        if (fileNameLength <= typeLength) { continue; }
+        if (common::utils::toLower(fileName.substr(fileNameLength-typeLength)) == type)
+        {
+            return true;
+        }
     }
-    return common::utils::toLower(fileName.substr(fileNameLength-typeLength)) == type;
+    return false;
 }
 
 bool isValidSearchingFile(const std::string& fileName)
 {
-    return !(
+    return not isMatchedFileType(fileName, {
         // libs
-        isMatchedFileType(fileName, ".dll") || isMatchedFileType(fileName, ".so") || isMatchedFileType(fileName, ".a") ||
+        ".dll", ".so", ".a",
         // binary files
-        isMatchedFileType(fileName, ".exe") || isMatchedFileType(fileName, ".out") || isMatchedFileType(fileName, ".bin") ||
-        isMatchedFileType(fileName, ".apk") ||
+        ".exe", ".out", ".bin", ".apk", ".msi",
         // microsoft office
-        isMatchedFileType(fileName, ".doc") || isMatchedFileType(fileName, ".pptx") || isMatchedFileType(fileName, ".ppt") ||
-        isMatchedFileType(fileName, ".pdf") || isMatchedFileType(fileName, ".xlsx") || isMatchedFileType(fileName, ".xlsm") ||
-        isMatchedFileType(fileName, ".docx") ||
-        // vedio
-        isMatchedFileType(fileName, ".mp4") || isMatchedFileType(fileName, ".avi") || isMatchedFileType(fileName, ".rmvb") ||
-        // music
-        isMatchedFileType(fileName, ".mp3") || isMatchedFileType(fileName, ".wmv") ||
+        ".doc", ".pptx", ".ppt", ".xlsm", ".pdf", ".xlsx", ".docx",
+        // video
+        ".mp4", ".avi", ".rmvb",
+        // audio
+        ".mp3", ".wmv",
         // others
-        isMatchedFileType(fileName, ".o") || isMatchedFileType(fileName, ".zip") || isMatchedFileType(fileName, ".tar")
-        );
-}
-
-void addLineIntoStream(std::stringstream& stream, const std::string& line, std::uint32_t lineCounter)
-{
-    stream << std::setw(5) << lineCounter << ": ";
-    stream << line << '\n';
-}
-
-void addFileNameIntoStream(std::stringstream& stream, const std::string& fileName)
-{
-    stream << ">>>" << fileName << '\n';
+        ".o", ".zip", ".tar"
+    });
 }
 
 bool isTheLineMatched(const std::string& text, const std::string& line, bool matchWholeWord)
@@ -65,49 +56,48 @@ bool isTheLineMatched(const std::string& text, const std::string& line, bool mat
     return matchWholeWord ? common::utils::isWordWholeMatched(text, line) : (line.find(text) != std::string::npos);
 }
 
-void searchTextInFileAndShowResult(const types::FileInfo& file, const std::string& text, const types::SearchOptions& options) try
+void searchTextInFileAndShowResult(const types::FileInfo& file, const std::string& text, const common::CaseSensitiveFilter& caseSensitiveFilter,
+                                   const common::WholeMatchFilter& wholeMatchFilter) try
 {
-    common::FileReader reader(file.getCompletePath());
-    bool findoutText = false;
-    std::stringstream resultToPrint{};
-    const auto _text = options.caseSensitive ? text : common::utils::toLower(text);
+    const auto fileName = file.getCompletePath();
+    common::FileReader reader(fileName);
+    types::LinesContainer container(fileName);
     for (std::uint32_t lineCounter = 1; !reader.isReadToEnd(); ++lineCounter)
     {
         const auto line = reader.readLine();
         if (common::utils::isBinaryLine(line)) { break; }
-        const auto _line = options.caseSensitive ? line : common::utils::toLower(line);
-        if (isTheLineMatched(_text, _line, options.matchWholeWord))
+        if (not common::SearchFilterFactory::isBasicMatched(text, line)) { continue; }
+        if (wholeMatchFilter(text, line) && caseSensitiveFilter(text, line))
         {
-            if (!findoutText)
-            {
-                findoutText = true;
-                addFileNameIntoStream(resultToPrint, file.getCompletePath());
-                addLineIntoStream(resultToPrint, line, lineCounter);
-            }
-            else
-            {
-                addLineIntoStream(resultToPrint, line, lineCounter);
-            }
+            container.addLine({lineCounter, line});
         }
     }
-    if (findoutText) { std::cout << resultToPrint.str() << std::endl; }
+    if (container.containLines())
+    {
+        std::cout << container << std::endl;
+    }
 }
 catch (const exceptions::FileError& err)
 {
     std::cout << err.what() << std::endl;
 }
 
-void searchTextInFiles(const std::string& text, const types::SearchOptions& options,
-                       std::queue<types::FileInfo>& files, common::Semaphore& sem)
+void searchTextInFiles(const std::string& text, std::deque<types::FileInfo>& files,
+                       const common::CaseSensitiveFilter& caseSensitiveFilter,
+                       const common::WholeMatchFilter& wholeMatchFilter,
+                       common::Semaphore& sem)
 {
-    while (files.size() != 0)
+    static std::uint32_t count = 0;
+    while (files.size() > count)
     {
         try { sem.wait(); }
         catch (const exceptions::SemaphoreWaitError&) { sem.release(); continue; }
-        const auto file = files.front();
-        files.pop();
+        //it's not thread safe in linux scenario, but safe in windows scenario. use files.at() is a temporary solution.
+        //const auto file = files.front();
+        //files.pop_front();
+        const auto file = files.at(count++);
         sem.release();
-        searchTextInFileAndShowResult(file, text, options);
+        searchTextInFileAndShowResult(file, text, caseSensitiveFilter, wholeMatchFilter);
     }
 }
 
@@ -116,6 +106,8 @@ class TextSearcher
 public:
     TextSearcher(const std::string& text, const types::SearchField& field, const types::SearchOptions& options)
     : text{text}, searchField(field), options(options), fileBrowser(searchField.dir)
+    , searchFilterFactory(options), caseSensitiveFilter{searchFilterFactory.createCaseSensitiveFilter()}
+    , wholeMatchFilter{searchFilterFactory.createWholeMatchFilter()}
     {}
 
     void search()
@@ -124,11 +116,10 @@ public:
         {
             if (searchField.files.size() == 0) { return true; }
             if (!isValidSearchingFile(fileName)) { return false; }
-            const auto _fileName = common::utils::toLower(fileName);
             for (const auto& item : searchField.files)
             {
-                const auto _item = common::utils::toLower(item);
-                if (_fileName.find(_item) != std::string::npos)
+                if (not common::SearchFilterFactory::isBasicMatched(item, fileName)) { continue; }
+                if (wholeMatchFilter(item, fileName) && caseSensitiveFilter(item, fileName))
                 {
                     return true;
                 }
@@ -145,10 +136,12 @@ public:
             auto sem = common::LinuxSemaphore(sem_t_);
         #endif
 
-        std::vector<std::thread> threads;
+        std::vector<std::thread> threads{};
+        threads.reserve(parallelThreadNum);
         for (auto i = 0; i < parallelThreadNum; ++i)
         {
-            threads.emplace_back(std::thread(searchTextInFiles, text, options, std::ref(files), std::ref(sem)));
+            threads.emplace_back(std::thread(searchTextInFiles, text, std::ref(files),
+                                             ref(caseSensitiveFilter), ref(wholeMatchFilter), std::ref(sem)));
         }
         for (auto i = 0; i < parallelThreadNum; ++i)
         {
@@ -161,4 +154,7 @@ private:
     types::SearchField searchField;
     types::SearchOptions options;
     common::FileBrowser fileBrowser;
+    common::SearchFilterFactory searchFilterFactory;
+    common::CaseSensitiveFilter caseSensitiveFilter;
+    common::WholeMatchFilter wholeMatchFilter;
 };

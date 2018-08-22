@@ -1,6 +1,6 @@
-# CLGR V4.0
+# CLGR V4.1.0
 
-dochen 2018/04/20
+dochen 2018/08/22
 
 In this version, the cross platform function is tested successfully, both on linux and windows it works well.
 

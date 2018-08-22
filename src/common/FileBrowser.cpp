@@ -18,9 +18,9 @@ FileBrowser::FileBrowser(const std::string& dir) : dir{dir}
 }
 
 #ifdef __WINDOWS__
-std::queue<types::FileInfo> FileBrowser::extractFiles(const Filter filter)
+std::deque<types::FileInfo> FileBrowser::extractFiles(const Filter filter)
 {
-    std::queue<types::FileInfo> files;
+    std::deque<types::FileInfo> files;
     std::queue<std::string> folders;
     struct _finddata_t fileInfo;
     folders.push(dir);
@@ -42,7 +42,7 @@ std::queue<types::FileInfo> FileBrowser::extractFiles(const Filter filter)
                 }
                 else if (filter(fileInfo.name))
                 {
-                    files.push(types::FileInfo(fileInfo.name, path));
+                    files.push_back(types::FileInfo(fileInfo.name, path));
                 }
             }while (_findnext(hFile, &fileInfo) == 0);
             _findclose(hFile);
@@ -83,10 +83,10 @@ void FileBrowser::showFiles(const Filter filter)
 }
 
 #else
-std::queue<types::FileInfo> FileBrowser::extractFiles(const Filter filter)
+std::deque<types::FileInfo> FileBrowser::extractFiles(const Filter filter)
 {
     std::queue<std::string> folders;
-    std::queue<types::FileInfo> files;
+    std::deque<types::FileInfo> files;
     folders.push(dir);
     while (folders.size())
     {
@@ -102,9 +102,9 @@ std::queue<types::FileInfo> FileBrowser::extractFiles(const Filter filter)
             {
                 folders.push(folder + "/" + file->d_name);
             }
-            else if (filter(file->d_name))
+            else if (file->d_type == DT_REG and filter(file->d_name))
             {
-                files.push(types::FileInfo(file->d_name, folder));
+                files.push_back(types::FileInfo(file->d_name, folder));
             }
         }
         closedir(pFolder);
@@ -130,7 +130,7 @@ void FileBrowser::showFiles(const Filter filter)
             {
                 folders.push(folder + "/" + file->d_name);
             }
-            else if (filter(file->d_name))
+            else if (file->d_type == DT_REG and filter(file->d_name))
             {
                 std::cout << types::FileInfo(file->d_name, folder) << std::endl;
             }

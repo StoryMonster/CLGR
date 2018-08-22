@@ -4,12 +4,13 @@
 #include "TextSearcher.hpp"
 #include "HelpDisplayer.hpp"
 #include "VersionControler.hpp"
-#include <chrono>
+#include "src/common/TimerService.hpp"
+#include "src/exceptions/ParserError.hpp"
 #include <iostream>
 
-int main(int argc, char *argv[])
+int main(int argc, char *argv[]) try
 {
-    const auto startTime = std::chrono::system_clock::now();
+    common::TimerService timerService;
     common::CommandLineParser parser(argc, argv);
     const auto cmdLineInfo = parser.parse();
 
@@ -17,17 +18,13 @@ int main(int argc, char *argv[])
     {
         FileSearcher searcher(cmdLineInfo.field, cmdLineInfo.options);
         searcher.search();
-        const auto endTime = std::chrono::system_clock::now();
-        const std::chrono::duration<double> elapsed_seconds = endTime - startTime;
-        std::cout << "Time used: " << elapsed_seconds.count() << "s" << std::endl;
+        std::cout << "Time used: " << timerService.getPassedTime() << 's' << std::endl;
     }
     else if (cmdLineInfo.type == types::SearchType::text)
     {
         TextSearcher searcher(cmdLineInfo.text, cmdLineInfo.field, cmdLineInfo.options);
         searcher.search();
-        const auto endTime = std::chrono::system_clock::now();
-        const std::chrono::duration<double> elapsed_seconds = endTime - startTime;
-        std::cout << "Time used: " << elapsed_seconds.count() << "s" << std::endl;
+        std::cout << "Time used: " << timerService.getPassedTime() << 's' << std::endl;
     }
     else if (cmdLineInfo.type == types::SearchType::version)
     {
@@ -38,4 +35,9 @@ int main(int argc, char *argv[])
         HelpDisplayer::display();
     }
 
+}
+catch(const exceptions::ParserError& e)
+{
+    std::cout << e.what() << std::endl;
+    HelpDisplayer::display();
 }

@@ -18,8 +18,6 @@ public:
     #endif
     }
 
-    virtual ~FileInfo() {}
-
     inline std::string getfileName() const
     {
         return fileName;

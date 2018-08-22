@@ -3,7 +3,7 @@ ifeq (${platform}, linux)
 else
     opts = -std=c++11 -D__WINDOWS__
 endif
-objs = Clgr.o CommandLineParser.o FileBrowser.o utils.o Semaphore.o
+objs = Clgr.o CommandLineParser.o FileBrowser.o utils.o Semaphore.o SearchFilterFactory.o
 CLGR: ${objs}
 	@echo "building CLGR"
 	@g++ ${opts} -g ${objs} -o CLGR
@@ -21,8 +21,12 @@ CommandLineParser.o: src/common/CommandLineParser.cpp src/common/CommandLinePars
 FileBrowser.o: src/common/FileBrowser.cpp src/types/FileInfo.hpp src/common/FileBrowser.hpp
 	@echo "building FileBrowser.o"
 	@g++ ${opts} -c src/common/FileBrowser.cpp
+SearchFilterFactory.o: src/types/SearchInfo.hpp src/common/SearchFilterFactory.cpp src/common/SearchFilterFactory.hpp src/common/utils.cpp
+	@echo "building SearchFilterFactory.o"
+	@g++ ${opts} -c src/common/SearchFilterFactory.cpp
 Clgr.o: src/main/Clgr.cpp src/common/CommandLineParser.hpp src/types/SearchInfo.hpp \
-        src/main/HelpDisplayer.hpp src/main/FileSearcher.hpp src/main/TextSearcher.hpp
+        src/main/HelpDisplayer.hpp src/main/FileSearcher.hpp src/main/TextSearcher.hpp \
+		src/common/TimerService.hpp
 	@echo "building Clgr.o"
 	@g++ ${opts} -c src/main/Clgr.cpp
 clean:
