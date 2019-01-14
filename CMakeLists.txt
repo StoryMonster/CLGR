@@ -1,11 +1,21 @@
 cmake_minimum_required(VERSION 3.4)
 
 SET(PROJECT_NAME CLGR)
-SET(CMAKE_MAKE_PROGRAM "MinGW Makefiles")
-SET(CMAKE_CXX_COMPILER "$ENV{MINGW_HOME}/bin/g++.exe")
-include_directories(${CMAKE_SOURCE_DIR})
-
 project(${PROJECT_NAME})
+
+if (WINDOWS)
+    message("build ${PROJECT_NAME} on windows")
+    SET(CMAKE_MAKE_PROGRAM "MinGW Makefiles")
+    SET(CMAKE_CXX_COMPILER "$ENV{MINGW_HOME}/bin/g++.exe")
+    SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -D__WINDOWS__ -Wall -std=c++14 -g")
+    include_directories(externals/mingw-std-threads)
+else()
+    message("build ${PROJECT_NAME} on linux")
+    SET(CMAKE_CXX_COMPILER g++)
+    SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -D__LINUX__ -Wall -std=c++14 -g -lpthread")
+endif()
+
+include_directories(${CMAKE_SOURCE_DIR})
 
 set(SOURCES src/common/CommandLineParser.cpp
             src/common/FileBrowser.cpp
@@ -32,5 +42,11 @@ set(HEADERS src/common/CommandLineParser.hpp
             src/types/FileInfo.hpp
             src/types/LinesContainer.hpp
             src/types/SearchInfo.hpp)
-SET(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -D__WINDOWS__ -Wall -std=c++14 -g")
 add_executable(${PROJECT_NAME} ${HEADERS} ${SOURCES})
+
+if (WINDOWS)
+    message("no need to link thread libraries in windows")
+elseif ()
+    target_link_libraries(${PROJECT_NAME} pthread)
+endif ()
+

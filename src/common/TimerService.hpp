@@ -6,10 +6,7 @@ namespace common
 class TimerService
 {
 public:
-    TimerService()
-    {
-        startTime = std::chrono::system_clock::now();
-    }
+    TimerService() {}
     
     double getPassedTime()
     {
@@ -19,6 +16,6 @@ public:
 
 
 private:
-    std::chrono::time_point<std::chrono::system_clock> startTime;
+    std::chrono::time_point<std::chrono::system_clock> startTime = std::chrono::system_clock::now();
 };
 }
