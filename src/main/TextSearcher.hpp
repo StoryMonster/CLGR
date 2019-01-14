@@ -138,12 +138,12 @@ public:
 
         std::vector<std::thread> threads{};
         threads.reserve(parallelThreadNum);
-        for (auto i = 0; i < parallelThreadNum; ++i)
+        for (std::uint8_t i = 0; i < parallelThreadNum; ++i)
         {
             threads.emplace_back(std::thread(searchTextInFiles, text, std::ref(files),
                                              ref(caseSensitiveFilter), ref(wholeMatchFilter), std::ref(sem)));
         }
-        for (auto i = 0; i < parallelThreadNum; ++i)
+        for (std::uint8_t i = 0; i < parallelThreadNum; ++i)
         {
             threads[i].join();
         }
