@@ -2,6 +2,7 @@
 #include "search/TextSearcher.hpp"
 #include "search/ClgrSearcher.hpp"
 #include "common/MatchedLine.hpp"
+#include "output/ClgrResult.hpp"
 #include "args/Args.hpp"
 
 int main(int argc, char** argv) {
@@ -16,7 +17,8 @@ int main(int argc, char** argv) {
     cmdParser.AddParameter("help", "h", {}, "");
     std::map<std::string, args::Param> config = cmdParser.parse();
 
-    search::ClgrSearcher searcher;
+    output::ClgrResult res{};
+    search::ClgrSearcher searcher(res);
     searcher.setIgnoreCase(config.at("ignorecase").isExist);
     searcher.setIgnoreFolderName(config.at("ignorefoldername").isExist);
     searcher.setMatchWholeWord(config.at("matchwholeword").isExist);

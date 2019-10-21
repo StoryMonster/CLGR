@@ -8,6 +8,13 @@ class Result;
 
 namespace search {
 
+struct Flags {
+    bool ignoreCase = false;
+    bool matchWholeWord = false;
+    bool ignoreFolderName = false;
+    bool useRegular = false;
+};
+
 class ClgrSearcher {
 public:
     ClgrSearcher(output::Result& resHandler);

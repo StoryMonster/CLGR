@@ -44,6 +44,7 @@ std::vector<FileInfo> listAll(const std::string& dir) {
 std::vector<FileInfo> listAll(const std::string& dir) {
     std::vector<FileInfo> files{};
     DIR* pFolder = opendir(dir.c_str());
+    if (pFolder == NULL) { return {}; }
     while (true) {
         struct dirent* file = readdir(pFolder);
         if (file == NULL) { break; }
@@ -60,10 +61,12 @@ std::vector<FileInfo> listAll(const std::string& dir) {
 #endif
 
 bool matchRegular(const ::std::string& line, const ::std::vector<::std::string>& keywords) {
+    if (keywords.empty()) { return true; }
     return true;
 }
 
 bool matchWholeWord(const ::std::string& line, const ::std::vector<::std::string>& keywords) {
+    if (keywords.empty()) { return true; }
     for (const auto& keyword : keywords) {
         std::string templine = line;
         while (true) {
@@ -81,6 +84,7 @@ bool matchWholeWord(const ::std::string& line, const ::std::vector<::std::string
 }
 
 bool matchDirectly(const ::std::string& line, const ::std::vector<::std::string>& keywords) {
+    if (keywords.empty()) { return true; }
     for (const auto& keyword : keywords) {
         if (line.find(keyword) != ::std::string::npos) {
             return true;

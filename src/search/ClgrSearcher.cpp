@@ -5,8 +5,6 @@
 #include "../common/functions.hpp"
 #include "../threads/Pool.hpp"
 #include "../output/Result.hpp"
-#include <sstream>
-#include <iostream>
 
 namespace search {
 
@@ -29,7 +27,7 @@ void ClgrSearcher::setUseRegular(bool ur) {
 }
 
 void ClgrSearcher::search(const std::vector<std::string>& dirs, const std::vector<std::string>& fileKeywords, const std::vector<std::string>& textKeywords) {
-    if (textKeywords.size() > 0) {
+    if (!textKeywords.empty()) {
         searchTexts(dirs, fileKeywords, textKeywords);
     } else {
         searchFiles(dirs, fileKeywords);
@@ -43,16 +41,16 @@ void ClgrSearcher::searchTexts(const std::vector<std::string>& dirs, const std::
     searcher.setIgnoreFolderName(true);
     searcher.setMatchWholeWord(false);
     searcher.setUseRegular(false);
-    std::function<void(const std::string& filename)> textSearchTask = std::bind([](const std::string& filename, const std::vector<std::string>& textKeywords, bool ignoreCase, bool matchWholeWord, bool useRegular) {
+    std::function<void(const std::string& filename)> textSearchTask = std::bind([](const std::string& filename, const std::vector<std::string>& textKeywords, const Flags& flags, output::Result& resHandler) {
         TextSearcher searcher(filename);
-        searcher.setIgnoreCase(ignoreCase);
-        searcher.setMatchWholeWord(matchWholeWord);
-        searcher.setUseRegular(useRegular);
-        searcher.setHandlerWhenFindAResult([](const std::string& file, const std::vector<common::MatchedLine>& lines) {
-            
+        searcher.setIgnoreCase(flags.ignoreCase);
+        searcher.setMatchWholeWord(flags.matchWholeWord);
+        searcher.setUseRegular(flags.useRegular);
+        searcher.setHandlerWhenFindAResult([&resHandler](const std::string& file, const std::vector<common::MatchedLine>& lines) {
+            resHandler.GetATextSearchResult(file, lines);
         });
         searcher.search(textKeywords);
-    }, std::placeholders::_1, textKeywords, isIgnoreCase, isMatchWholeWord, isUseRegular);
+    }, std::placeholders::_1, textKeywords, Flags{isIgnoreCase, isMatchWholeWord, true, isUseRegular}, std::ref(resHandler));
     threads::Pool pool(textSearchTask);
     searcher.setHandlerWhenFindAResult([&pool](const std::string& filename) {
         if (common::isTextFile(filename)) {
@@ -70,8 +68,8 @@ void ClgrSearcher::searchFiles(const std::vector<std::string>& dirs, const std::
     searcher.setIgnoreFolderName(isIgnoreFolderName);
     searcher.setMatchWholeWord(isMatchWholeWord);
     searcher.setUseRegular(isUseRegular);
-    searcher.setHandlerWhenFindAResult([](const std::string& file) {
-        std::cout << file << std::endl;
+    searcher.setHandlerWhenFindAResult([this](const std::string& file) {
+        (this->resHandler).GetAFileSearchResult(file);
     });
     searcher.search(fileKeywords);
 }

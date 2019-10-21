@@ -32,7 +32,7 @@ void FileSearcher::setHandlerWhenFindAResult(const std::function<void(const std:
 }
 
 void FileSearcher::search(const std::vector<std::string>& keywords) {
-    if (keywords.size() == 0 || destDirs.size() == 0) { return; }
+    if (destDirs.empty()) { return; }
     std::function<bool(const std::string&)> matchFunc = common::getMatchFunc(keywords, isIgnoreCase, isMatchWholeWord, isUseRegular);
     std::queue<std::string> folders{};
     for (const auto& dir: destDirs) {
