@@ -6,14 +6,14 @@ namespace threads {
 void run(FileQueue& files, std::function<void(const std::string& filename)> handler, std::atomic<bool>& isWorking) {
     while (isWorking) {
         std::string filename = files.pop();
-        if (filename.size() > 0) {
+        if (!filename.empty()) {
             handler(filename);
         }
     }
 }
 
 Pool::Pool(const std::function<void(const std::string& filename)>& task): task{task} {
-    ths.resize(8);
+    ths.resize(6);
 }
 
 void Pool::start() {
@@ -32,5 +32,9 @@ void Pool::destroy() {
 
 void Pool::addFile(const std::string& filename) {
     files.push(filename);
+}
+
+bool Pool::hasTasks() {
+    return !files.empty();
 }
 }

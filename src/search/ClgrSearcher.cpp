@@ -59,6 +59,7 @@ void ClgrSearcher::searchTexts(const std::vector<std::string>& dirs, const std::
     });
     pool.start();
     searcher.search(fileKeywords);
+    while (pool.hasTasks());
     pool.destroy();
 }
 

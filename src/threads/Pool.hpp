@@ -15,6 +15,7 @@ public:
     void start();
     void destroy();
     void addFile(const std::string& filename);
+    bool hasTasks();
 
 private:
     std::vector<std::thread> ths{};

@@ -7,7 +7,7 @@
 
 int main(int argc, char** argv) {
     args::Args cmdParser(argc, argv);
-    cmdParser.AddParameter("dir", "d", {}, "");
+    cmdParser.AddParameter("dir", "d", {"."}, "");
     cmdParser.AddParameter("file", "f", {}, "");
     cmdParser.AddParameter("text", "t", {}, "");
     cmdParser.AddParameter("ignorecase", "ic", {}, "");
@@ -23,5 +23,8 @@ int main(int argc, char** argv) {
     searcher.setIgnoreFolderName(config.at("ignorefoldername").isExist);
     searcher.setMatchWholeWord(config.at("matchwholeword").isExist);
     searcher.setUseRegular(config.at("regular").isExist);
-    searcher.search(config.at("dir").value, config.at("file").value, config.at("text").value);
+    auto dirs = config.at("dir").isExist ? config.at("dir").value : config.at("dir").defaultVal;
+    auto files = config.at("file").isExist ? config.at("file").value : config.at("file").defaultVal;
+    auto texts = config.at("text").isExist ? config.at("text").value : config.at("text").defaultVal;
+    searcher.search(dirs, files, texts);
 }

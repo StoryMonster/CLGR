@@ -23,7 +23,7 @@ set(SOURCES src/main.cpp
             src/threads/Pool.cpp
             src/args/Args.cpp)
 
-#add_definitions(-D __WINDOWS__)
-add_compile_options(-std=c++14 -g)
+add_definitions(-D __WINDOWS__)
+#add_compile_options(-std=c++14 -g)
 add_executable(clgr ${HEADERS} ${SOURCES})
-target_link_libraries(clgr pthread)
+#target_link_libraries(clgr pthread)
