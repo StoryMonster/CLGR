@@ -15,7 +15,7 @@ void toLower(::std::string&);
 ::std::vector<FileInfo> listAll(const ::std::string& dir);
 bool matchDirectly(const ::std::string& line, const ::std::vector<::std::string>& keywords);
 bool matchWholeWord(const ::std::string& line, const ::std::vector<::std::string>& keywords);
-bool matchRegular(const ::std::string& line, const ::std::vector<::std::string>& keywords);
+bool matchRegular(const ::std::string& line, const ::std::vector<std::string>& keywords);
 std::function<bool(const std::string&)> getMatchFunc(const ::std::vector<::std::string>& keywords, bool ignoreCase, bool matchWholeWord, bool useRegular);
 
 bool isDir(const std::string& path);

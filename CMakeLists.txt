@@ -23,7 +23,15 @@ set(SOURCES src/main.cpp
             src/threads/Pool.cpp
             src/args/Args.cpp)
 
-add_definitions(-D __WINDOWS__)
-#add_compile_options(-std=c++14 -g)
+
+IF (CMAKE_SYSTEM_NAME MATCHES "Linux")
+    add_compile_options(-std=c++14 -g)
+ELSEIF (CMAKE_SYSTEM_NAME MATCHES "Windows")
+    add_definitions(-D __WINDOWS__)
+ENDIF ()
+
 add_executable(clgr ${HEADERS} ${SOURCES})
-#target_link_libraries(clgr pthread)
+
+IF (CMAKE_SYSTEM_NAME MATCHES "Linux")
+    target_link_libraries(clgr pthread)
+ENDIF ()

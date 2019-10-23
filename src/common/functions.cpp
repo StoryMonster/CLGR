@@ -1,6 +1,7 @@
 #include "functions.hpp"
 #include <algorithm>
 #include <cstring>
+#include <regex>
 
 #ifdef __WINDOWS__
 #include <io.h>
@@ -60,9 +61,14 @@ std::vector<FileInfo> listAll(const std::string& dir) {
 }
 #endif
 
-bool matchRegular(const ::std::string& line, const ::std::vector<::std::string>& keywords) {
-    if (keywords.empty()) { return true; }
-    return true;
+bool matchRegular(const ::std::string& line, const std::vector<std::string>& keywords) {
+    if (keywords.empty()) { return false; }
+    for (const auto& keyword : keywords) {
+        if (std::regex_match(line, std::regex(keyword))) {
+            return true;
+        }
+    }
+    return false;
 }
 
 bool matchWholeWord(const ::std::string& line, const ::std::vector<::std::string>& keywords) {
